@@ -1,6 +1,13 @@
-import { useEffect, useCallback } from "react";
-import { StyleSheet, TouchableOpacity, useWindowDimensions } from "react-native";
+import { useEffect, useCallback, useState } from "react";
+import {
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  useWindowDimensions,
+  Pressable,
+} from "react-native";
 import * as DocumentPicker from "expo-document-picker";
+import { Ionicons } from "@expo/vector-icons";
 
 import { ThemedView } from "@/components/themed-view";
 import { ThemedText } from "@/components/themed-text";
@@ -8,15 +15,17 @@ import { useThemeColor } from "@/hooks/use-theme-color";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { speak } from "../../speech/textToSpeech";
 
-const WELCOME_MESSAGE =
-  "Welcome. Choose an option to get started.";
+const WELCOME_MESSAGE = "Welcome. Choose an option to get started.";
 
 export default function HomeScreen() {
   const { width } = useWindowDimensions();
   const tint = useThemeColor({}, "tint");
   const colorScheme = useColorScheme();
-  const buttonBg =
-    colorScheme === "dark" ? "rgba(255,255,255,0.12)" : "rgba(10, 126, 164, 0.2)";
+
+  const cardBg =
+    colorScheme === "dark" ? "rgba(255,255,255,0.06)" : "#fff";
+
+  const [pressed, setPressed] = useState(false);
 
   useEffect(() => {
     speak(WELCOME_MESSAGE);
@@ -35,42 +44,69 @@ export default function HomeScreen() {
       }
 
       const file = result.assets[0];
-      speak(`Form selected: ${file.name}. We'll use this form in the next step.`);
-      // TODO: navigate to form-filling flow with file.uri
-    } catch (err) {
+      speak(`Form selected: ${file.name}`);
+    } catch {
       speak("Could not open files. Please try again.");
     }
   }, []);
+
+  const scanForm = () => {
+    speak("Camera feature coming soon.");
+  };
 
   return (
     <ThemedView style={styles.container}>
       <ThemedText type="title" style={styles.title}>
         V ASSIST
       </ThemedText>
+
       <ThemedText style={styles.subtitle}>
-        Choose how you want to add your form.
+        Choose how you want to add your form
       </ThemedText>
 
-      <TouchableOpacity
+      <View
         style={[
-          styles.uploadButton,
+          styles.card,
           {
-            minWidth: Math.min(width * 0.8, 320),
-            borderColor: tint,
-            backgroundColor: buttonBg,
+            width: Math.min(width * 0.9, 360),
+            backgroundColor: cardBg,
           },
         ]}
-        onPress={pickDocument}
-        activeOpacity={0.8}
-        accessibilityRole="button"
-        accessibilityLabel="Upload form from files"
-        accessibilityHint="Opens your files so you can select a form to fill"
       >
-        <ThemedText style={styles.uploadButtonText}>Upload form</ThemedText>
-        <ThemedText style={styles.uploadButtonHint}>
-          Choose a form from Downloads or Files
-        </ThemedText>
-      </TouchableOpacity>
+        <Pressable
+          onPressIn={() => setPressed(true)}
+          onPressOut={() => setPressed(false)}
+          onPress={pickDocument}
+          style={({ pressed }) => [
+            styles.button,
+            { transform: [{ scale: pressed ? 0.96 : 1 }] },
+          ]}
+        >
+          <Ionicons name="cloud-upload-outline" size={26} color={tint} />
+          <View>
+            <ThemedText style={styles.buttonText}>Upload Form</ThemedText>
+            <ThemedText style={styles.hint}>
+              Choose from Files or Downloads
+            </ThemedText>
+          </View>
+        </Pressable>
+
+        <Pressable
+          onPress={scanForm}
+          style={({ pressed }) => [
+            styles.button,
+            { transform: [{ scale: pressed ? 0.96 : 1 }] },
+          ]}
+        >
+          <Ionicons name="scan-outline" size={26} color={tint} />
+          <View>
+            <ThemedText style={styles.buttonText}>Scan with Camera</ThemedText>
+            <ThemedText style={styles.hint}>
+              Take photo of your form
+            </ThemedText>
+          </View>
+        </Pressable>
+      </View>
     </ThemedView>
   );
 }
@@ -79,33 +115,43 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 24,
-    paddingTop: 48,
+    paddingTop: 60,
     alignItems: "center",
   },
   title: {
     textAlign: "center",
-    marginBottom: 8,
+    marginBottom: 6,
+    letterSpacing: 1,
   },
   subtitle: {
     textAlign: "center",
-    marginBottom: 40,
-    opacity: 0.9,
+    marginBottom: 24,
+    opacity: 0.8,
+    fontSize: 15,
   },
-  uploadButton: {
-    paddingVertical: 24,
-    paddingHorizontal: 32,
-    borderRadius: 16,
-    borderWidth: 2,
+  card: {
+    borderRadius: 24,
+    padding: 18,
+    gap: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 5,
+  },
+  button: {
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 14,
+    borderRadius: 14,
   },
-  uploadButtonText: {
-    fontSize: 22,
+  buttonText: {
+    fontSize: 18,
     fontWeight: "700",
-    marginBottom: 4,
   },
-  uploadButtonHint: {
-    fontSize: 14,
-    opacity: 0.85,
+  hint: {
+    fontSize: 13,
+    opacity: 0.7,
   },
 });
